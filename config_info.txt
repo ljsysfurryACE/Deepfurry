@@ -1,0 +1,3 @@
+Kernel config file: kernel_config
+Build on: RainYun 4C/3.8G VPS
+Date: 2026-07-29
