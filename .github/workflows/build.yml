@@ -1,4 +1,4 @@
-name: Build & Test Deepfurry
+name: Build & Test Cloud LTE OS
 
 on:
   push:
@@ -32,12 +32,12 @@ jobs:
       - name: 上传镜像产物
         uses: actions/upload-artifact@v4
         with:
-          name: deepfurry-v8.2
-          path: deepfurry_v8.2.img
+          name: cloudlte-v8.2
+          path: cloudlte_v8.2.img
 
       - name: 创建 Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: deepfurry_v8.2.img
+          files: cloudlte_v8.2.img
           generate_release_notes: true

@@ -1,15 +1,15 @@
 #!/bin/bash
-# Deepfurry v8.1 自动构建脚本
+# Cloud LTE OS v8.1 自动构建脚本
 # 内核 7.1.5 + WiFi + TUI Dashboard + Package Manager
 
 set -e
-DIR=/tmp/deepfurry-build
+DIR=/tmp/cloudlte-build
 KERNEL_SRC=https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.1.5.tar.xz
 DISTRO_DIR=/tmp/linux_distro
 INITRAMFS_DIR=$DISTRO_DIR/initramfs
 PKG_DIR=/tmp/deep-repo
 
-echo "=== 🐾 Deepfurry v8.1 Build ==="
+echo "=== ☁️ Cloud LTE OS v8.1 Build ==="
 mkdir -p $DIR $DISTRO_DIR
 
 # 1. 下载内核源码
@@ -96,7 +96,7 @@ find . | cpio -H newc -o 2>/dev/null | gzip > $DISTRO_DIR/initramfs.gz
 # 6. 构建 UEFI 镜像
 echo "[6/6] 构建 UEFI 镜像 (64MB)..."
 cd $DISTRO_DIR
-IMG=deepfurry_uefi.img
+IMG=cloudlte_uefi.img
 rm -f $IMG
 dd if=/dev/zero of=$IMG bs=1M count=64 2>/dev/null
 parted -s $IMG mklabel gpt 2>/dev/null
@@ -104,7 +104,7 @@ parted -s $IMG mkpart primary fat32 1MiB 63MiB 2>/dev/null
 parted -s $IMG set 1 esp on 2>/dev/null
 
 LOOP=$(losetup -Pf --show $IMG 2>/dev/null)
-mkfs.vfat -F32 -n DEEPFURRY ${LOOP}p1 2>/dev/null
+mkfs.vfat -F32 -n CLOUDLTE ${LOOP}p1 2>/dev/null
 mount ${LOOP}p1 /mnt 2>/dev/null
 mkdir -p /mnt/EFI/BOOT /mnt/boot/grub
 grub-mkimage -o /mnt/EFI/BOOT/BOOTX64.EFI -O x86_64-efi -p /EFI/BOOT \
@@ -114,15 +114,15 @@ cp bzImage /mnt/boot/vmlinuz
 cat > /mnt/boot/grub/grub.cfg << 'GRUBEOF'
 set timeout=5
 set default=0
-menuentry "🐾 Deepfurry 7.1.5 (v8.1)" {
+menuentry "☁️ Cloud LTE OS 7.1.5 (v8.1)" {
     linux /boot/vmlinuz quiet
     initrd /boot/initrd.img
 }
-menuentry "Deepfurry - 救援模式" {
+menuentry "Cloud LTE OS - 救援模式" {
     linux /boot/vmlinuz single
     initrd /boot/initrd.img
 }
-menuentry "Deepfurry - 详细日志" {
+menuentry "Cloud LTE OS - 详细日志" {
     linux /boot/vmlinuz loglevel=7
     initrd /boot/initrd.img
 }
@@ -131,11 +131,11 @@ sync
 umount /mnt 2>/dev/null
 losetup -d $LOOP 2>/dev/null
 
-cp $IMG /root/.openclaw/workspace/deepfurry_v8.1.img
+cp $IMG /root/.openclaw/workspace/cloudlte_v8.1.img
 
 echo ""
 echo "======================"
-echo "  🐾 构建完成!"
+echo "  ☁️ 构建完成!"
 echo "======================"
 echo "  v8.1 更新内容:"
 echo "  ✅ WiFi 支持 (wpa_supplicant + iw)"
@@ -144,5 +144,5 @@ echo "  ✅ 包管理器 deep v2 (5个包)"
 echo "  ✅ htop 进程监控"
 echo "  ✅ GRUB 启动菜单 (3模式)"
 echo ""
-echo "  镜像: /root/.openclaw/workspace/deepfurry_v8.1.img"
-ls -lh /root/.openclaw/workspace/deepfurry_v8.1.img
+echo "  镜像: /root/.openclaw/workspace/cloudlte_v8.1.img"
+ls -lh /root/.openclaw/workspace/cloudlte_v8.1.img

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Deepfurry 包管理器 v3
+# Cloud LTE OS 包管理器 v3
 REPO="${DEEP_REPO:-https://furryhifurry.space/deep-repo}"
 DB=/var/lib/deep/packages
 CACHE=/var/cache/deep
@@ -7,7 +7,7 @@ MUSL=/usr/lib/musl
 mkdir -p /var/lib/deep /var/cache/deep $MUSL 2>/dev/null
 
 usage() {
-    echo "Deepfurry 包管理器 v3"
+    echo "Cloud LTE OS 包管理器 v3"
     echo "用法: deep [install|remove|list|update|upgrade|search] [包名]"
 }
 
@@ -75,9 +75,9 @@ case "$1" in
         ;;
     upgrade)
         echo "检查更新..."
-        VER=$(fetch "$REPO/deepfurry/version" /tmp/ver && cat /tmp/ver)
+        VER=$(fetch "$REPO/cloudlte/version" /tmp/ver && cat /tmp/ver)
         echo "最新版本: ${VER:-unknown}"
-        echo "下载新镜像: $REPO/deepfurry/deepfurry_uefi_latest.img"
+        echo "下载新镜像: $REPO/cloudlte/cloudlte_latest.img"
         ;;
     *) usage ;;
 esac

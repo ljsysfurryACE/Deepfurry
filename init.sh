@@ -1,5 +1,5 @@
 #!/bin/busybox sh
-# Deepfurry 7.1.5 v8.2 init
+# Cloud LTE OS 7.1.5 v8.2 init
 /bin/busybox mount -t proc none /proc
 /bin/busybox mount -t sysfs none /sys
 /bin/busybox mount -t devtmpfs none /dev
@@ -48,7 +48,7 @@ udhcpc -i eth0 -q -s /usr/share/udhcpc/default.script 2>/dev/null &
 clear
 echo ""
 echo "  ======================================="
-echo "   🐾 Deepfurry 7.1.5 v8.2"
+echo "   ☁️ Cloud LTE OS 7.1.5 v8.2"
 echo "   Linux from Scratch"
 echo "   WiFi + TUI + Swap + Logrotate"
 echo "  ======================================="

@@ -1,25 +1,25 @@
 #!/bin/bash
-# Deepfurry CI 验证脚本: 下载成品镜像 + 结构校验 + QEMU 冒烟测试
+# Cloud LTE OS CI 验证脚本: 下载成品镜像 + 结构校验 + QEMU 冒烟测试
 set -e
 cd /tmp
 
-echo "=== [1/3] 下载 Deepfurry v8.2 镜像 ==="
+echo "=== [1/3] 下载 Cloud LTE OS v8.2 镜像 ==="
 # 从软件源下载最新镜像 (HK 服务器)
-curl -sL --connect-timeout 30 --max-time 300 "https://furryhifurry.space/deep-repo/deepfurry/deepfurry_v8.2.img" -o /tmp/deepfurry_v8.2.img 2>/dev/null || \
-curl -sL --connect-timeout 30 --max-time 300 "https://github.com/ljsysfurryACE/Deepfurry/releases/latest/download/deepfurry_v8.2.img" -o /tmp/deepfurry_v8.2.img 2>/dev/null
-if [ ! -s /tmp/deepfurry_v8.2.img ]; then
+curl -sL --connect-timeout 30 --max-time 300 "https://furryhifurry.space/deep-repo/cloudlte/cloudlte_v8.2.img" -o /tmp/cloudlte_v8.2.img 2>/dev/null || \
+curl -sL --connect-timeout 30 --max-time 300 "https://github.com/ljsysfurryACE/Cloud LTE OS/releases/latest/download/cloudlte_v8.2.img" -o /tmp/cloudlte_v8.2.img 2>/dev/null
+if [ ! -s /tmp/cloudlte_v8.2.img ]; then
     echo "❌ 镜像下载失败，尝试从仓库构建..."
     # fallback: 如果仓库里有镜像文件直接用
-    if [ -f ${WS:-$GITHUB_WORKSPACE}/deepfurry_v8.2.img ]; then
-        cp ${WS:-$GITHUB_WORKSPACE}/deepfurry_v8.2.img /tmp/deepfurry_v8.2.img
+    if [ -f ${WS:-$GITHUB_WORKSPACE}/cloudlte_v8.2.img ]; then
+        cp ${WS:-$GITHUB_WORKSPACE}/cloudlte_v8.2.img /tmp/cloudlte_v8.2.img
     else
         exit 1
     fi
 fi
-ls -lh /tmp/deepfurry_v8.2.img
+ls -lh /tmp/cloudlte_v8.2.img
 
 echo "=== [2/3] 镜像结构校验 ==="
-IMG=/tmp/deepfurry_v8.2.img
+IMG=/tmp/cloudlte_v8.2.img
 LOOP=$(losetup -Pf --show $IMG)
 partprobe $LOOP
 sleep 1
@@ -58,7 +58,7 @@ else
 fi
 # 启动并等待 shell 出现
 timeout 180 qemu-system-x86_64 -machine q35,accel=tcg -m 512 -smp 2 \
-    -drive file=/tmp/deepfurry_v8.2.img,format=raw,if=none,id=disk0 \
+    -drive file=/tmp/cloudlte_v8.2.img,format=raw,if=none,id=disk0 \
     -device ide-hd,drive=disk0,bus=ide.0 \
     -drive file=$OVMF_CODE,if=pflash,format=raw,readonly=on \
     -drive file=/tmp/ovmf_vars.fd,if=pflash,format=raw \

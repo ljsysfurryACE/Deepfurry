@@ -1,5 +1,5 @@
 #!/bin/sh
-# Deepfurry System Dashboard v2 🐾
+# Cloud LTE OS Dashboard v2 ☁️
 # Enhanced TUI with dialog if available, fallback to plain shell
 
 HAS_DIALOG=$(command -v dialog 2>/dev/null)
@@ -43,9 +43,9 @@ if [ -n "$HAS_DIALOG" ]; then
         UPTIME=$(get_uptime)
         RAM=$(get_ram)
 
-        dialog --clear --title "🐾 Deepfurry 7.1.5" \
+        dialog --clear --title "☁️ Cloud LTE OS 7.1.5" \
             --colors \
-            --backtitle "Deepfurry System Dashboard" \
+            --backtitle "Cloud LTE OS Dashboard" \
             --menu "\nZ"\
 "        IP: ${IP:-Not connected}\n"\
 "        WiFi: ${SSID:-N/A}\n"\
@@ -146,13 +146,13 @@ $(ifconfig eth0 2>/dev/null | head -3)" 14 60
                 dialog --msgbox "File Server started on :8080\nIP: $(get_ip):8080" 6 40
                 ;;
             7)
-                dialog --yesno "Install Deepfurry to disk?\nThis will overwrite the target disk!" 7 40
+                dialog --yesno "Install Cloud LTE OS to disk?\nThis will overwrite the target disk!" 7 40
                 [ $? -eq 0 ] && (install.sh 2>/dev/null; dialog --msgbox "Installation complete" 5 30)
                 ;;
             8)
                 dialog --clear
                 clear
-                echo "🐾 Deepfurry Shell (type 'exit' to return)"
+                echo "☁️ Cloud LTE Shell (type 'exit' to return)"
                 /bin/sh -l
                 ;;
             9)
@@ -177,7 +177,7 @@ else
         DISK=$(get_disk)
 
         echo -e "${CYAN}=====================================${NC}"
-        echo -e "  ${GREEN}🐾 Deepfurry 7.1.5${NC}"
+        echo -e "  ${GREEN}☁️ Cloud LTE OS 7.1.5${NC}"
         echo -e "${CYAN}=====================================${NC}"
         echo -e "  ${YELLOW}IP:${NC}     ${IP:-Not connected}"
         echo -e "  ${YELLOW}WiFi:${NC}   ${SSID:-N/A}"
