@@ -8,14 +8,14 @@ echo "whoami=$(whoami) PWD=$PWD"
 ls -la ${WS:-$GITHUB_WORKSPACE}/ 2>&1 | head -10
 
 echo "=== [1/4] 下载并编译内核 ==="
-KERNEL_SRC="https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.1.5.tar.xz"
 mkdir -p /tmp/build
-echo "下载内核: $KERNEL_SRC"
-curl -L --retry 2 --connect-timeout 30 --max-time 600 "$KERNEL_SRC" -o /tmp/build/linux.tar.xz
-echo "下载完成: $(du -h /tmp/build/linux.tar.xz | cut -f1)"
-ls -la /tmp/build/linux.tar.xz
-cd /tmp/build && tar xf linux.tar.xz
+cd /tmp/build
+echo "从软件源下载内核源码 (130MB)..."
+curl -sL --connect-timeout 30 --max-time 900 "https://furryhifurry.space/deep-repo/linux-7.1.5.tar.xz" -o linux.tar.xz
+ls -la linux.tar.xz
+tar xf linux.tar.xz
 cd linux-7.1.5
+echo "内核源码就绪"
 if [ -f ${WS:-${GITHUB_WORKSPACE}}/kernel_config ]; then
     cp ${WS:-${GITHUB_WORKSPACE}}/kernel_config .config
 else
