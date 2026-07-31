@@ -18,16 +18,22 @@ for tty in /dev/ttyS0 /dev/tty1 /dev/console; do
     [ -c "$tty" ] && exec < "$tty" > "$tty" 2>&1 && break
 done
 
+# ===== musl 运行时 (sqlite3/tcpdump 等动态包) =====
+mkdir -p /lib 2>/dev/null
+[ -f /usr/lib/musl/ld-musl-x86_64.so.1 ] && cp /usr/lib/musl/ld-musl-x86_64.so.1 /lib/ 2>/dev/null
+export LD_LIBRARY_PATH=/usr/lib/musl
+
 # ===== 系统稳定性 =====
-# 1. swap 文件 (64MB, 防止 OOM)
-if [ ! -f /swapfile ]; then
-    dd if=/dev/zero of=/swapfile bs=1M count=64 2>/dev/null
-    chmod 600 /swapfile
-    mkswap /swapfile 2>/dev/null
-    swapon /swapfile 2>/dev/null && echo "  ✅ swap 已启用 (64MB)"
+# 1. swap 文件 (64MB, 防止 OOM) - 放 /tmp (tmpfs)
+if [ ! -f /tmp/swapfile ]; then
+    dd if=/dev/zero of=/tmp/swapfile bs=1M count=64 2>/dev/null
+    chmod 600 /tmp/swapfile
+    mkswap /tmp/swapfile 2>/dev/null
+    swapon /tmp/swapfile 2>/dev/null && echo "  ✅ swap 已启用 (64MB)"
 fi
 
 # 2. 日志轮转 (防止 /var/log 写满)
+mkdir -p /var/spool/cron/crontabs 2>/dev/null
 echo "0 3 * * *  find /var/log -type f -size +1M -exec truncate -s 1M {} \\; 2>/dev/null" >> /etc/crontabs/root 2>/dev/null || true
 echo "0 6 * * *  echo -n > /var/log/*.log 2>/dev/null" >> /etc/crontabs/root 2>/dev/null || true
 crond 2>/dev/null &
