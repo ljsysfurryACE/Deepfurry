@@ -2,7 +2,7 @@
 
 **Deepfurry** 从零编译的微型 Linux 发行版，基于 Linux 7.1.5 内核 + BusyBox。
 
-## v8.1 新特性
+## v8.2 新特性
 
 | 功能 | 说明 |
 |------|------|
@@ -26,19 +26,19 @@
 
 | 文件 | 大小 | 说明 |
 |------|------|------|
-| `deepfurry_v8.1.img` | 64MB | UEFI 启动镜像 |
-| `deepfurry-7.1.5-v8.1-installer.iso` | 18MB | 安装 ISO（BIOS/UEFI 双启） |
+| `deepfurry_v8.2.img` | 64MB | UEFI 启动镜像 |
+| `deepfurry-7.1.5-v8.2-installer.iso` | 18MB | 安装 ISO（BIOS/UEFI 双启） |
 | `build.sh` | — | 自动构建脚本 |
 
 ## 启动
 
 ```bash
 # 写入 U 盘
-dd if=deepfurry_v8.1.img of=/dev/sdX bs=1M
+dd if=deepfurry_v8.2.img of=/dev/sdX bs=1M
 
 # 或 QEMU 测试（推荐 KVM 加速）
 qemu-system-x86_64 -machine q35,accel=kvm -m 512 \
-  -drive file=deepfurry_v8.1.img,format=raw,if=none,id=disk0 \
+  -drive file=deepfurry_v8.2.img,format=raw,if=none,id=disk0 \
   -device ide-hd,drive=disk0,bus=ide.0 \
   -drive file=/usr/share/OVMF/OVMF_CODE_4M.fd,if=pflash,format=raw,readonly=on
 ```
@@ -65,7 +65,7 @@ qemu-system-x86_64 -machine q35,accel=kvm -m 512 \
 # Debian/Ubuntu: apt install ovmf
 
 qemu-system-x86_64 -machine q35,accel=kvm -m 512 \
-  -drive file=deepfurry_v8.1.img,format=raw,if=none,id=disk0 \
+  -drive file=deepfurry_v8.2.img,format=raw,if=none,id=disk0 \
   -device ide-hd,drive=disk0,bus=ide.0 \
   -drive file=/usr/share/OVMF/OVMF_CODE_4M.fd,if=pflash,format=raw,readonly=on \
   -drive file=OVMF_VARS_4M.fd,if=pflash,format=raw \
