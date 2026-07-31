@@ -9,8 +9,8 @@ mkdir -p /tmp/build
 curl -L --retry 3 --connect-timeout 30 "$KERNEL_SRC" -o /tmp/build/linux.tar.xz
 cd /tmp/build && tar xf linux.tar.xz
 cd linux-7.1.5
-if [ -f /github/workspace/kernel_config ]; then
-    cp /github/workspace/kernel_config .config
+if [ -f ${GITHUB_WORKSPACE}/kernel_config ]; then
+    cp ${GITHUB_WORKSPACE}/kernel_config .config
 else
     make defconfig
 fi
@@ -41,19 +41,19 @@ for pkg in dialog htop iw wpasupplicant nano; do
     [ -s /tmp/deep-repo/packages/$pkg/$pkg ] && cp /tmp/deep-repo/packages/$pkg/$pkg usr/bin/ 2>/dev/null
 done
 # init 脚本
-cp /github/workspace/init.sh init 2>/dev/null || echo '#!/bin/busybox sh
+cp ${GITHUB_WORKSPACE}/init.sh init 2>/dev/null || echo '#!/bin/busybox sh
 /bin/busybox mount -t proc none /proc 2>/dev/null
 /bin/busybox mount -t sysfs none /sys 2>/dev/null
 exec /bin/sh' > init
 chmod +x init
 # deep 包管理器
-[ -f /github/workspace/deep ] && cp /github/workspace/deep bin/deep && chmod +x bin/deep
+[ -f ${GITHUB_WORKSPACE}/deep ] && cp ${GITHUB_WORKSPACE}/deep bin/deep && chmod +x bin/deep
 # 打包
 find . | cpio -H newc -o 2>/dev/null | gzip > /tmp/initramfs.gz
 echo "✅ initramfs 完成 ($(du -h /tmp/initramfs.gz | cut -f1))"
 
 echo "=== [3/4] 构建 UEFI 镜像 ==="
-cd /github/workspace
+cd ${GITHUB_WORKSPACE}
 IMG=deepfurry_v8.2.img
 dd if=/dev/zero of=$IMG bs=1M count=64 2>/dev/null
 parted -s $IMG mklabel gpt
