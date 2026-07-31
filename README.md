@@ -1,42 +1,49 @@
-# Deepfurry 7.1.5
+# 🐾 Deepfurry — Linux from Scratch
 
-从零编译的 Linux 命令行发行版。在 RainYun 4核3.8GB VPS 上纯手工编译。
+**Deepfurry** 从零编译的微型 Linux 发行版，基于 Linux 7.1.5 内核 + BusyBox。
 
-## 规格
+## v8.1 新特性
 
-- 内核: Linux 7.1.5 x86_64 (3.9MB bzImage)
-- 配置: defconfig, 794项驱动全开
-- 根文件系统: BusyBox 1.36.1 静态编译, 272命令
-- 引导: UEFI + GRUB 2.12, GPT分区表, FAT32 ESP
-- 镜像大小: 64MB
-- 最低内存: 128MB
+| 功能 | 说明 |
+|------|------|
+| ✅ **WiFi 支持** | wpa_supplicant + iw，支持 WPA2/WPA3 无线网络 |
+| ✅ **TUI 管理面板** | dialog 驱动的系统仪表盘（后退到纯 Shell） |
+| ✅ **包管理器 v2** | `deep install/remove/list/update/search` |
+| ✅ **htop** | 交互式进程监控 |
+| ✅ **GRUB 启动菜单** | 正常 / 救援 / 详细日志 三种模式 |
+| ✅ **软件源** | 5 个包可安装 |
 
-## v2 新增
+## 系统规格
 
-- ✅ Dropbear SSH 服务器（启动后自动运行，端口22）
-- ✅ DHCP 自动获取IP
-- ✅ 主机名: deepfurry
+- **内核:** Linux 7.1.5 (x86_64)
+- **大小:** 64MB
+- **init:** BusyBox Shell
+- **SSH:** Dropbear
+- **包管理器:** deep
+- **软件源:** deep-repo
 
-## 使用方法
+## 下载
+
+| 文件 | 大小 | 说明 |
+|------|------|------|
+| `deepfurry_v8.1.img` | 64MB | UEFI 启动镜像 |
+| `build.sh` | — | 自动构建脚本 |
+
+## 启动
 
 ```bash
-# 写U盘
-dd if=deepfurry_uefi_v2.img of=/dev/sdX bs=1M
+# 写入 U 盘
+dd if=deepfurry_v8.1.img of=/dev/sdX bs=1M
+
+# 或 QEMU 测试
+qemu-system-x86_64 -drive file=deepfurry_v8.1.img,format=raw -m 512
 ```
 
-UEFI 启动 → GRUB 菜单 → Deepfurry → Shell
+## 用法
 
-## 文件说明
-
-- `deepfurry_uefi_v2.img` — UEFI可启动镜像 (64MB, 含SSH+DHCP)
-- `deepfurry_uefi_v1.img` — v1基础镜像 (64MB, 无网络)
-- `initrd.img` — initramfs根文件系统
-- `kernel_config` — Linux内核编译配置
-- `deepfurry.html` — 项目介绍页
-
-## 构建环境
-
-- VPS: RainYun 4核, 3.8GB RAM
-- 内核源码: kernel.org linux-7.1.5
-- Dropbear: 2024.85 (静态编译)
-- GCC: Ubuntu 13.3.0
+```
+deep update        # 刷新包列表
+deep install htop  # 安装 htop
+deep list          # 查看已安装
+menu               # 打开管理面板
+```

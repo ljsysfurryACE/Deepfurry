@@ -1,0 +1,8 @@
+# Deepfurry 软件仓库
+# 用法: deep install <包名>
+#
+dialog         TUI界面框架 (用于系统管理面板)
+htop           交互式进程监控器
+iw             无线网络配置工具
+wpasupplicant  WPA/WPA2/WPA3 无线网络认证守护进程
+wpa_passphrase WPA PSK生成工具

@@ -1,0 +1,74 @@
+#!/bin/sh
+# Deepfurry 包管理器 v2
+REPO="${DEEP_REPO:-https://furryhifurry.space/deep-repo}"
+DB=/var/lib/deep/packages
+CACHE=/var/cache/deep
+mkdir -p /var/lib/deep /var/cache/deep 2>/dev/null
+
+usage() {
+    echo "Deepfurry 包管理器 v2"
+    echo "用法: deep [install|remove|list|update|upgrade|search] [包名]"
+}
+
+case "$1" in
+    update|refresh)
+        echo "获取包列表..."
+        PKGS=$(curl -s "$REPO/packages/list" 2>/dev/null || wget -qO- "$REPO/packages/list" 2>/dev/null)
+        if [ -z "$PKGS" ]; then
+            echo "⚠️  无法连接仓库: $REPO"
+            echo "   检查网络连接"
+            exit 1
+        fi
+        echo "$PKGS" | grep -v "^#" | grep -v "^$" > /tmp/avail_pkgs
+        echo "✅ 已更新包列表 ($(wc -l < /tmp/avail_pkgs) 个包)"
+        ;;
+    list)
+        echo "已安装:"
+        [ -f "$DB" ] && cat "$DB" | awk '{print "  📦 " $1}' || echo "  (无)"
+        echo ""
+        echo "可用:"
+        [ -f /tmp/avail_pkgs ] && cat /tmp/avail_pkgs | awk '{print "  📦 " $1 " - " $2}' || echo "  (运行 deep update 刷新)"
+        ;;
+    search)
+        Q="$2"
+        [ -z "$Q" ] && { echo "用法: deep search <关键词>"; exit 1; }
+        echo "搜索: $Q"
+        grep -i "$Q" /tmp/avail_pkgs 2>/dev/null | awk '{print "  📦 " $1 " - " $2}' || echo "  未找到匹配的包"
+        ;;
+    install)
+        PKG="$2"
+        [ -z "$PKG" ] && { echo "用法: deep install <包名>"; exit 1; }
+        echo "下载 $PKG..."
+        mkdir -p $CACHE/$PKG
+        curl -sL "$REPO/packages/$PKG/$PKG" -o "$CACHE/$PKG/$PKG" 2>/dev/null || \
+            wget -q "$REPO/packages/$PKG/$PKG" -O "$CACHE/$PKG/$PKG" 2>/dev/null
+        if [ ! -f "$CACHE/$PKG/$PKG" ] || [ ! -s "$CACHE/$PKG/$PKG" ]; then
+            echo "❌ 下载失败: $PKG"
+            exit 1
+        fi
+        chmod +x "$CACHE/$PKG/$PKG"
+        cp "$CACHE/$PKG/$PKG" /usr/bin/$PKG 2>/dev/null || cp "$CACHE/$PKG/$PKG" /bin/$PKG 2>/dev/null
+        echo "$PKG $(date)" >> "$DB"
+        sort -u "$DB" -o "$DB"
+        echo "✅ 安装完成: $PKG"
+        ;;
+    remove)
+        PKG="$2"
+        [ -z "$PKG" ] && { echo "用法: deep remove <包名>"; exit 1; }
+        rm -f /usr/bin/$PKG /bin/$PKG 2>/dev/null
+        grep -v "^$PKG " "$DB" > "${DB}.tmp" 2>/dev/null && mv "${DB}.tmp" "$DB"
+        echo "✅ 已移除: $PKG"
+        ;;
+    upgrade)
+        echo "检查更新..."
+        VER=$(curl -s "$REPO/deepfurry/version" 2>/dev/null || wget -qO- "$REPO/deepfurry/version" 2>/dev/null || echo "unknown")
+        CURRENT="v8.0"
+        echo "当前: $CURRENT | 最新: $VER"
+        if [ "$CURRENT" != "$VER" ]; then
+            echo "新版本可用! 下载: $REPO/deepfurry/deepfurry_uefi_latest.img"
+        else
+            echo "已是最新。"
+        fi
+        ;;
+    *) usage ;;
+esac
