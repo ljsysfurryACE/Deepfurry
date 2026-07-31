@@ -19,135 +19,23 @@ jobs:
           sudo apt-get install -y -qq \
             build-essential bc bison flex libssl-dev libncurses-dev \
             dosfstools parted mtools grub-common grub-pc-bin grub-efi-amd64-bin \
-            cpio gzip xz-utils wget curl genext2fs
-          sudo apt-get install -y -qq qemu-system-x86 ovmf 2>/dev/null || true
+            cpio gzip xz-utils wget curl \
+            qemu-system-x86 ovmf busybox-static
 
-      - name: 准备预编译工具
+      - name: 构建 + 验证
         run: |
-          mkdir -p /tmp/deep-repo/packages
-          # 从软件源下载预编译包（避免 CI 重复编译）
-          for pkg in dialog htop iw wpasupplicant nano; do
-            mkdir -p /tmp/deep-repo/packages/$pkg
-            curl -sL "https://furryhifurry.space/deep-repo/packages/$pkg/$pkg" -o /tmp/deep-repo/packages/$pkg/$pkg 2>/dev/null || true
-          done
-          echo "预编译包下载完成"
-          ls -la /tmp/deep-repo/packages/ 2>/dev/null || true
-
-      - name: 构建内核
-        run: |
-          # 下载内核源码（用镜像站加速）
-          KERNEL_SRC="https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.1.5.tar.xz"
-          mkdir -p /tmp/build
-          curl -L --retry 3 --connect-timeout 30 "$KERNEL_SRC" -o /tmp/build/linux.tar.xz
-          cd /tmp/build && tar xf linux.tar.xz
-          cd linux-7.1.5
-          cp $GITHUB_WORKSPACE/kernel_config .config 2>/dev/null || make defconfig
-          # 启用 WiFi 配置
-          ./scripts/config -e CONFIG_WLAN
-          ./scripts/config -e CONFIG_WIRELESS
-          ./scripts/config -e CONFIG_CFG80211
-          ./scripts/config -e CONFIG_MAC80211
-          ./scripts/config --set-str CONFIG_INITRAMFS_SOURCE ""
-          make olddefconfig
-          make -j$(nproc) bzImage
-          cp arch/x86/boot/bzImage /tmp/bzImage
-
-      - name: 构建 initramfs
-        run: |
-          mkdir -p /tmp/initramfs/{bin,usr/bin,etc,proc,sys,tmp,root,dev,var/log,www}
-          cd /tmp/initramfs
-          # busybox
-          curl -sL "https://busybox.net/downloads/binaries/1.35.0-x86_64-linux-musl/busybox" -o bin/busybox 2>/dev/null || \
-            sudo apt-get install -y -qq busybox-static && cp /bin/busybox bin/busybox
-          chmod +x bin/busybox
-          # 预编译工具
-          for pkg in dialog htop iw wpasupplicant nano; do
-            [ -f /tmp/deep-repo/packages/$pkg/$pkg ] && cp /tmp/deep-repo/packages/$pkg/$pkg usr/bin/
-          done
-          # init 脚本
-          cp $GITHUB_WORKSPACE/init.sh init 2>/dev/null || echo "#!/bin/busybox sh
-          /bin/busybox mount -t proc none /proc 2>/dev/null
-          /bin/busybox mount -t sysfs none /sys 2>/dev/null
-          exec /bin/sh" > init
-          chmod +x init
-          # deep 包管理器
-          cp $GITHUB_WORKSPACE/deep bin/deep 2>/dev/null || true
-          chmod +x bin/deep 2>/dev/null || true
-          # 打包
-          find . | cpio -H newc -o 2>/dev/null | gzip > /tmp/initramfs.gz
-
-      - name: 构建 UEFI 镜像
-        run: |
-          IMG=deepfurry_v8.2.img
-          dd if=/dev/zero of=$IMG bs=1M count=64
-          parted -s $IMG mklabel gpt
-          parted -s $IMG mkpart primary fat32 1MiB 63MiB
-          parted -s $IMG set 1 esp on
-          LOOP=$(sudo losetup -Pf --show $IMG)
-          sudo mkfs.vfat -F32 -n DEEPFURRY ${LOOP}p1
-          mkdir -p /tmp/mnt
-          sudo mount ${LOOP}p1 /tmp/mnt
-          sudo mkdir -p /tmp/mnt/EFI/BOOT /tmp/mnt/boot/grub
-          sudo grub-mkimage -o /tmp/mnt/EFI/BOOT/BOOTX64.EFI -O x86_64-efi -p /EFI/BOOT \
-            fat ext2 part_gpt normal boot linux configfile loopback search help
-          sudo cp /tmp/bzImage /tmp/mnt/boot/vmlinuz
-          sudo cp /tmp/initramfs.gz /tmp/mnt/boot/initrd.img
-          cat > /tmp/grub.cfg << 'EOF'
-set timeout=3
-set default=0
-menuentry "🐾 Deepfurry 7.1.5 (v8.2)" {
-    linux /boot/vmlinuz console=ttyS0,115200 quiet
-    initrd /boot/initrd.img
-}
-EOF
-          sudo cp /tmp/grub.cfg /tmp/mnt/EFI/BOOT/grub.cfg
-          sudo cp /tmp/grub.cfg /tmp/mnt/boot/grub/grub.cfg
-          sudo sync
-          sudo umount /tmp/mnt
-          sudo losetup -d $LOOP
-          cp $IMG deepfurry_v8.2.img
-          ls -lh deepfurry_v8.2.img
-
-      - name: QEMU 启动验证
-        run: |
-          # 创建临时 VARS
-          cp /usr/share/OVMF/OVMF_VARS_4M.fd /tmp/ovmf_vars.fd 2>/dev/null || \
-            cp /usr/share/ovmf/OVMF_VARS_4M.fd /tmp/ovmf_vars.fd 2>/dev/null || true
-          # 启动 QEMU 验证（120秒内应看到 shell 提示符）
-          timeout 150 qemu-system-x86_64 -machine q35,accel=tcg -m 512 -smp 2 \
-            -drive file=deepfurry_v8.2.img,format=raw,if=none,id=disk0 \
-            -device ide-hd,drive=disk0,bus=ide.0 \
-            -drive file=/usr/share/OVMF/OVMF_CODE_4M.fd,if=pflash,format=raw,readonly=on \
-            -drive file=/tmp/ovmf_vars.fd,if=pflash,format=raw \
-            -nographic -no-reboot -serial mon:stdio > /tmp/qemu.log 2>&1 &
-          QEMU_PID=$!
-          # 等待并检查 shell 出现
-          for i in $(seq 1 30); do
-            sleep 5
-            if grep -q "BusyBox v" /tmp/qemu.log 2>/dev/null; then
-              echo "✅ QEMU 启动成功，进入 shell"
-              kill $QEMU_PID 2>/dev/null
-              exit 0
-            fi
-          done
-          echo "❌ QEMU 启动验证失败"
-          tail -30 /tmp/qemu.log
-          kill $QEMU_PID 2>/dev/null
-          exit 1
+          chmod +x ci_build.sh
+          sudo bash ci_build.sh
 
       - name: 上传镜像产物
         uses: actions/upload-artifact@v4
         with:
           name: deepfurry-v8.2
-          path: |
-            deepfurry_v8.2.img
-            build.sh
-            README.md
+          path: deepfurry_v8.2.img
 
       - name: 创建 Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            deepfurry_v8.2.img
+          files: deepfurry_v8.2.img
           generate_release_notes: true
