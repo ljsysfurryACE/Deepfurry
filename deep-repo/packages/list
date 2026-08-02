@@ -1,4 +1,4 @@
-# Cloud LTE OS 软件仓库
+# Deepfurry 软件仓库
 # 用法: deep install <包名>
 #
 dialog         TUI界面框架 (用于系统管理面板)
@@ -9,3 +9,4 @@ wpa_passphrase WPA PSK生成工具
 nano           轻量级文本编辑器
 sqlite3        轻量级 SQL 数据库
 tcpdump        网络抓包分析工具
+curl           完整版网络工具 (https/HTTP2)

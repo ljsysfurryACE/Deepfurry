@@ -1,0 +1,59 @@
+#!/bin/sh
+# Cloud LTE OS 防火墙管理工具 v1
+# 基于 /proc/net 状态 + 简单规则 (nftables 内核支持待编译)
+# 用法: fw [status|open|close|list|help] [端口]
+
+FW_RULES=/etc/fw.rules
+mkdir -p /etc 2>/dev/null
+
+usage() {
+    echo "☁️ Cloud LTE OS 防火墙 v1"
+    echo "用法: fw <命令> [参数]"
+    echo ""
+    echo "  fw status         查看防火墙状态"
+    echo "  fw open <端口>    开放端口 (TCP)"
+    echo "  fw close <端口>   关闭端口"
+    echo "  fw list           列出已开放端口"
+    echo "  fw help           帮助"
+    echo ""
+    echo "说明: 完整 nftables 支持待内核编译启用"
+    echo "      当前版本基于规则文件 + 监听端口管理"
+}
+
+# 已开放的端口列表
+fw_list() {
+    [ -f $FW_RULES ] && cat $FW_RULES | awk '{print "  🔓 TCP/"$1" ("$2")"}' || echo "  (无规则)"
+}
+
+case "$1" in
+    status)
+        echo "=== ☁️ Cloud LTE OS 防火墙状态 ==="
+        echo "内核: $(uname -r)"
+        echo "Netfilter: $(grep -c netfilter /proc/net/protocols 2>/dev/null || echo 0) 协议"
+        echo ""
+        echo "当前监听端口:"
+        ss -tln 2>/dev/null | tail -n +2 | awk '{print "  "$4}' || netstat -tln 2>/dev/null | tail -n +3 | awk '{print "  "$4}'
+        echo ""
+        echo "已配置规则:"
+        fw_list
+        ;;
+    open)
+        PORT="$2"
+        [ -z "$PORT" ] && { echo "用法: fw open <端口>"; exit 1; }
+        echo "$PORT $(date '+%Y-%m-%d %H:%M')" >> $FW_RULES
+        sort -u $FW_RULES -o $FW_RULES
+        echo "✅ 端口 $PORT 已开放"
+        ;;
+    close)
+        PORT="$2"
+        [ -z "$PORT" ] && { echo "用法: fw close <端口>"; exit 1; }
+        grep -v "^$PORT " "$FW_RULES" > "${FW_RULES}.tmp" 2>/dev/null && mv "${FW_RULES}.tmp" "$FW_RULES" || rm -f "${FW_RULES}.tmp"
+        echo "✅ 端口 $PORT 已关闭"
+        ;;
+    list)
+        fw_list
+        ;;
+    help|*)
+        usage
+        ;;
+esac
