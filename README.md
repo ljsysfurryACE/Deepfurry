@@ -86,3 +86,9 @@ deep install htop  # 安装 htop
 deep list          # 查看已安装
 menu               # 打开管理面板
 ```
+
+## 许可证
+
+本项目（脚本与构建工具）采用 **MIT License**，见 [LICENSE](./LICENSE)。
+
+系统镜像内的第三方组件（Linux 内核、BusyBox 等）遵循各自的上游许可证，完整声明见 [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md)。GPL 组件的对应源码获取方式已在其中说明。
